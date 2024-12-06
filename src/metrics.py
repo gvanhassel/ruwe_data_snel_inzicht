@@ -58,3 +58,28 @@ class F1Score:
             return 2 * (precision_score * recall_score) / (precision_score + recall_score)
         except ZeroDivisionError:
             return 0
+        
+class Accuracy:
+    def __repr__(self) -> str:
+        return "Accuracy Metric"
+
+    def __call__(self, y: Tensor, yhat: Tensor) -> Tensor:
+        """
+        Computes accuracy for multi-class classification using CrossEntropyLoss outputs.
+
+        Args:
+            y (Tensor): Ground truth labels of shape [batch_size].
+                        Should be integers representing class indices.
+            yhat (Tensor): Predicted logits of shape [batch_size, num_classes].
+
+        Returns:
+            Tensor: Accuracy as a scalar tensor.
+        """
+        # Get the predicted class (highest logit)
+        yhat_classes = torch.argmax(yhat, dim=1)
+
+        # Compare predictions with ground truth
+        correct = (yhat_classes == y).float().sum()
+
+        # Return accuracy
+        return correct / y.shape[0]

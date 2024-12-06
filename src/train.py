@@ -35,11 +35,8 @@ def trainbatches(
         x, y = x.to(device), y.to(device)
         optimizer.zero_grad()
         yhat = model(x)
-        # if len(y.shape) == 2: #CROSENTROPY
-        #     yhat =  yhat.transpose(1, 2)
-        # print(yhat.dtype)
-        # print(yhat.dtype)
-        loss = loss_fn(yhat.float(), y.float()) #loss_fn(yhat, y) #loss_fn(yhat.float(), y.float())
+
+        loss = loss_fn(yhat, y) #loss_fn(yhat, y) #loss_fn(yhat.float(), y.float())
         loss.backward()
         optimizer.step()
         train_loss += loss.detach().to('cpu').numpy()
@@ -60,10 +57,9 @@ def evalbatches(
     for _ in range(eval_steps):
         x, y = next(iter(testdatastreamer))
         x, y = x.to(device), y.to(device)
-        yhat, _ = model(x)
-        # if len(y.shape) == 2: #CROSENTROPY
-        #     yhat =  yhat.transpose(1, 2)
-        test_loss += loss_fn(yhat.float(), y.float()).detach().to('cpu').numpy() #loss_fn(yhat, y).detach().to('cpu').numpy() #loss_fn(yhat.float(), y.float()).detach().to('cpu').numpy()
+        yhat = model(x)
+        
+        test_loss += loss_fn(yhat, y).detach().to('cpu').numpy() #loss_fn(yhat, y).detach().to('cpu').numpy() #loss_fn(yhat.float(), y.float()).detach().to('cpu').numpy()
         for m in metrics:
             metric_dict[str(m)] = (
                 metric_dict.get(str(m), 0.0) + m(y, yhat).detach().to('cpu').numpy()

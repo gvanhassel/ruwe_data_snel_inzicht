@@ -68,7 +68,8 @@ class BaseDatastreamer:
             else:
                 X, Y = zip(*batch)  # noqa N806
                 X, Y = torch.stack(X), torch.stack(Y)
-                Y = torch.unsqueeze(Y,1)
+                # Y = torch.unsqueeze(Y,1)
+                # Y = Y.squeeze(dim=1) # for binairy cross entropy loss function
             yield X, Y
 
 
