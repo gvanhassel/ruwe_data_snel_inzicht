@@ -87,6 +87,7 @@ def trainloop(
     patience: int = 4,
     factor: float = 0.5,
     tunewriter: bool = False,
+    return_losses: bool = False,
 ) -> GenericModel:
     """
 
@@ -117,6 +118,7 @@ def trainloop(
     Returns:
         _type_: _description_
     """
+    
 
     optimizer_: torch.optim.Optimizer = optimizer(
         model.parameters(), lr=learning_rate
@@ -133,37 +135,47 @@ def trainloop(
         writer = SummaryWriter(log_dir=log_dir)
         save_config_to_file(config_dict, log_dir, model.name)
 
+    train_losses, val_losses = [], []
+
     for epoch in tqdm(range(epochs), colour="#1e4706"):
         train_loss = trainbatches(
             model, train_dataloader, loss_fn, optimizer_, train_steps
         )
 
-        metric_dict, test_loss = evalbatches(
+        metric_dict, val_loss = evalbatches(
             model, test_dataloader, loss_fn, metrics, eval_steps
         )
 
-        scheduler.step(test_loss)
+        scheduler.step(val_loss)
 
         if tunewriter:
             tune.report(
                 iterations=epoch,
                 train_loss=train_loss,
-                test_loss=test_loss,
+                test_loss=val_loss,
                 **metric_dict,
             )
         else:
             writer.add_scalar("Loss/train", train_loss, epoch)
-            writer.add_scalar("Loss/test", test_loss, epoch)
+            writer.add_scalar("Loss/test", val_loss, epoch)
             for m in metric_dict:
                 writer.add_scalar(f"metric/{m}", metric_dict[m], epoch)
             lr = [group["lr"] for group in optimizer_.param_groups][0]
             writer.add_scalar("learning_rate", lr, epoch)
             metric_scores = [f"{v:.4f}" for v in metric_dict.values()]
             logger.info(
-                f"Epoch {epoch} train {train_loss:.4f} test {test_loss:.4f} metric {metric_scores}"  # noqa E501
+                f"Epoch {epoch} train {train_loss:.4f} test {val_loss:.4f} metric {metric_scores}"  # noqa E501
             )
 
-    return model
+        if return_losses:
+           # Record losses
+            train_losses.append(train_loss)
+            val_losses.append(val_loss)
+            
+    if return_losses:
+        return model, train_losses, val_losses
+    else:
+        return model
 
 
 def dir_add_timestamp(log_dir: Optional[Path] = None, model_name: str =  None) -> Path:

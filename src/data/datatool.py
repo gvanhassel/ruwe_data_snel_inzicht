@@ -77,13 +77,16 @@ class DataProcessor:
 
 
     
-    def tokenizer(self):
+    def tokenizer(
+            self,
+            col_event='event'
+        ):
         # Step 1: Map unique events to integer tokens
-        unique_events = self.df['event'].unique()
+        unique_events = self.df[col_event].unique()
         self.event_to_token = {event: idx for idx, event in enumerate(unique_events)}
 
         # Step 2: Apply the mapping to create tokenized data
-        self.df['event'] = self.df['event'].map(self.event_to_token)
+        self.df[col_event] = self.df[col_event].map(self.event_to_token)
 
 
     def df_to_3dtensor(
@@ -116,8 +119,9 @@ class DataProcessor:
 
         data_tensor = torch.stack(tensors)
         
-        self.data_tensor = data_tensor[:,:,1:4] # remove id:target
-        self.label_tensor = data_tensor[:,:,4].max(dim=1).values # get target
+        self.data_tensor = data_tensor[:,:,1:] # remove id
+        self.data_tensor = data_tensor[:,:,:-1] # remove target
+        self.label_tensor = data_tensor[:,:,-1].max(dim=1).values # get target
         # return self.tensor
 
     def return_(
@@ -130,16 +134,24 @@ class DataProcessor:
             return self.data_tensor.float()
         if name == "label_tensor":
             return self.label_tensor.long()
+    
+    
+    def apply_steps(self, steps: list):
+        for step in steps:
+            if hasattr(self, step):
+                getattr(self, step)()
+            else:
+                print(f"Step '{step}' not found in DataProcessor.")
         
-    def get_data(
-            self,
-    ):
-        self.replace_global_features_with_nan()
-        self.zscore_transformation()
-        self.melt_dataframe()
-        self.merge_label()
-        self.tokenizer()
-        self.df_to_3dtensor()
-
+    def get_data(self, steps=None):
+        if steps is None:
+            steps = [
+                "replace_global_features_with_nan",
+                "zscore_transformation",
+                "melt_dataframe",
+                "merge_label",
+                "tokenizer",
+                "df_to_3dtensor"
+            ]
+        self.apply_steps(steps)
         return self.return_("3dtensor"), self.return_("label_tensor")
-
