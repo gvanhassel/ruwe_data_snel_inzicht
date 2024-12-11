@@ -7,10 +7,10 @@ Tensor = torch.Tensor
 
 
 class AttentionModel(nn.Module):
-    def __init__(self, input_dim, hidden_dim, output_dim):
+    def __init__(self, config):
         super(AttentionModel, self).__init__()
         self.name = "test_model_attention"
-        self.n_dims = input_dim + config["embedding_dim"] - 1
+        self.n_dims = config["n_feat"] + config["embedding_dim"] - 1
 
         # embedding:
         self.embedding = nn.Embedding(config["categorical_size"], config["embedding_dim"])
@@ -28,10 +28,10 @@ class AttentionModel(nn.Module):
         )
 
         # Attention scoring mechanism
-        self.Linear1 = nn.Linear(self.n_dims, hidden_dim)
+        self.Linear1 = nn.Linear(self.n_dims, config["hidden_dim"])
 
         # Output layer to map attention-weighted input to output classes
-        self.output_layer = nn.Linear(hidden_dim, output_dim)
+        self.output_layer = nn.Linear(config["hidden_dim"], config["output_dim"])
 
     def forward(self, x):
         """
