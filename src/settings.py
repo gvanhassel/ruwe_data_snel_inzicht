@@ -30,3 +30,12 @@ projectsettings = Settings(
 )
 
 
+config = {
+    "batchsize": 32,
+    "hidden_dim": 64,                       
+    "output_dim": 1, 
+    "epochs": 3,
+    "embedding_dim": 4,
+    "num_heads": 1,
+    "dropout": 0.05,
+}
